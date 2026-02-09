@@ -1,105 +1,67 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Earthquake Monitoring Dashboard</title>
+    <title>Firebase EarthQuake Monitor</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
-        :root {
-            --primary: #2c3e50;
-            --danger: #e74c3c;
-            --success: #2ecc71;
-            --warning: #f1c40f;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ecf0f1; margin: 0; padding: 20px; color: var(--primary); }
-        .container { max-width: 600px; margin: auto; }
-        .header { text-align: center; padding: 20px; background: var(--primary); color: white; border-radius: 15px 15px 0 0; }
-        
-        .dashboard { background: white; padding: 20px; border-radius: 0 0 15px 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        
-        .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .card { padding: 15px; border-radius: 10px; border: 1px solid #ddd; text-align: center; }
-        .card h3 { margin: 0 0 10px 0; font-size: 14px; color: #7f8c8d; }
-        .value { font-size: 24px; font-weight: bold; }
-        
-        .system-status { padding: 15px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; text-align: center; }
-        .status-ok { background: #d4edda; color: #155724; }
-        .status-alert { background: #f8d7da; color: #721c24; animation: blink 1s infinite; }
-        
-        .controls { display: flex; gap: 10px; }
-        button { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-stop { background: var(--warning); color: #000; }
-        .btn-reset { background: var(--success); }
-        button:hover { opacity: 0.8; transform: translateY(-2px); }
-
-        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
+        body { font-family: sans-serif; text-align: center; background: #2c3e50; color: white; }
+        .card { background: #34495e; padding: 20px; border-radius: 15px; width: 300px; margin: 20px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .val { font-size: 2em; color: #2ecc71; }
+        .alert { color: #e74c3c; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+        button { padding: 10px 20px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h2>📡 ระบบเฝ้าระวังแผ่นดินไหว</h2>
-    </div>
+    <h1>🌍 Earthquake Real-time Monitor</h1>
     
-    <div class="dashboard">
-        <div id="alarm-banner" class="system-status status-ok">
-            สถานะปัจจุบัน: ปกติ
-        </div>
-
-        <div class="status-grid">
-            <div class="card">
-                <h3>🌡 อุณหภูมิ</h3>
-                <div class="value"><span id="temp">--</span> °C</div>
-            </div>
-            <div class="card">
-                <h3>📳 สั่นสะเทือน</h3>
-                <div id="vib-label" class="value">--</div>
-            </div>
-            <div class="card" style="grid-column: span 2;">
-                <h3>🔊 ระดับเสียง</h3>
-                <div id="sound-label" class="value">--</div>
-            </div>
-        </div>
-
-        <div class="controls">
-            <button class="btn-stop" onclick="control('stop')">🔇 หยุดเสียงเตือน</button>
-            <button class="btn-reset" onclick="control('reset')">🔄 รีเซ็ตระบบ</button>
-        </div>
+    <div class="card">
+        <h3>สถานะระบบ</h3>
+        <div id="status-text" class="val">ปกติ</div>
     </div>
-</div>
 
-<script>
-    // ฟังก์ชันดึงข้อมูลจาก ESP8266
-    function updateData() {
-        fetch('/data')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('temp').innerText = data.temp;
-                document.getElementById('vib-label').innerText = data.vib == 1 ? "ปกติ" : "⚠️ ตรวจพบ";
-                document.getElementById('sound-label').innerText = data.sound == 1 ? "ปกติ" : "⚠️ ตรวจพบ";
-                
-                const banner = document.getElementById('alarm-banner');
-                if(data.alert == true) {
-                    banner.innerText = "🚨 ตรวจพบเหตุการณ์ผิดปกติ!";
-                    banner.className = "system-status status-alert";
-                } else {
-                    banner.innerText = "✅ สถานะปัจจุบัน: ปกติ";
-                    banner.className = "system-status status-ok";
-                }
-            })
-            .catch(err => console.log("เชื่อมต่อบอร์ดไม่ได้..."));
-    }
+    <div class="card">
+        <p>🌡 อุณหภูมิ: <span id="temp" class="val">--</span> °C</p>
+        <p>📳 สั่นสะเทือน: <span id="vib" class="val">--</span></p>
+        <p>🔊 เสียง: <span id="sound" class="val">--</span></p>
+    </div>
 
-    // ฟังก์ชันส่งคำสั่งควบคุม
-    function control(action) {
-        fetch('/' + action)
-            .then(() => alert("ส่งคำสั่ง " + action + " เรียบร้อย"));
-    }
+    <button onclick="resetSystem()" style="background:#e67e22; color:white;">RESET ALERT</button>
 
-    // อัปเดตข้อมูลทุกๆ 2 วินาที
-    setInterval(updateData, 2000);
-</script>
+    <script>
+        // --- คัดลอก Config จาก Firebase Console มาใส่ที่นี่ ---
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
+        // ดึงข้อมูล Real-time
+        db.ref("Monitor").on("value", (snapshot) => {
+            const data = snapshot.val();
+            document.getElementById("temp").innerText = data.temperature;
+            document.getElementById("vib").innerText = data.vibration == 1 ? "ปกติ" : "⚠️ ตรวจพบ";
+            document.getElementById("sound").innerText = data.sound == 1 ? "ปกติ" : "⚠️ ตรวจพบ";
+            
+            if (data.alertLocked) {
+                document.getElementById("status-text").innerText = "🚨 ตรวจพบแผ่นดินไหว!";
+                document.getElementById("status-text").classList.add("alert");
+            } else {
+                document.getElementById("status-text").innerText = "ปกติ";
+                document.getElementById("status-text").classList.remove("alert");
+            }
+        });
+
+        function resetSystem() {
+            db.ref("Monitor").update({ alertLocked: false });
+        }
+    </script>
 </body>
 </html>
