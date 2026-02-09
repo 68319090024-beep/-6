@@ -1,81 +1,39 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <title>Earthquake Monitoring</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
-      text-align: center;
-      padding: 30px;
-    }
-    .card {
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 10px;
-      margin: 15px auto;
-      width: 300px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.4);
-    }
-    button {
-      padding: 15px 25px;
-      font-size: 18px;
-      background: red;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: darkred;
-    }
-  </style>
 </head>
-
 <body>
+  <h2>📡 Earthquake Monitoring</h2>
 
-  <h1>🌏 ระบบเฝ้าระวังแผ่นดินไหว</h1>
-
-  <div class="card">
-    <p>🌡 อุณหภูมิ: <span id="temp">-</span> °C</p>
-    <p>🔊 เสียง: <span id="sound">-</span></p>
-    <p>📳 การสั่นสะเทือน: <span id="vib">-</span></p>
-    <p>🚨 สถานะ Alarm: <span id="alarm">-</span></p>
-  </div>
+  <p>Vibration: <span id="vib">-</span></p>
+  <p>Sound: <span id="sound">-</span></p>
+  <p>Temp: <span id="temp">-</span> °C</p>
 
   <button onclick="stopAlarm()">🛑 STOP ALARM</button>
 
-  <script>
-    // 🔥 ใส่ config Firebase ของคุณตรงนี้
-    var firebaseConfig = {
-      databaseURL: "https://xxxxxx.firebaseio.com"
-    };
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-    firebase.initializeApp(firebaseConfig);
-    var db = firebase.database();
+<script>
+var firebaseConfig = {
+  databaseURL: "https://jane-904ca-default-rtdb.firebaseio.com"
+};
+firebase.initializeApp(firebaseConfig);
 
-    // ===== อ่านค่าแบบเรียลไทม์ =====
-    db.ref("/").on("value", function(snapshot) {
-      var data = snapshot.val();
-      if (!data) return;
+var db = firebase.database();
 
-      document.getElementById("temp").innerText = data.temperature;
-      document.getElementById("sound").innerText = data.sound;
-      document.getElementById("vib").innerText = data.vibration;
-      document.getElementById("alarm").innerText = data.alarm ? "ON 🚨" : "OFF ✅";
-    });
+db.ref("sensor").on("value", snap => {
+  let d = snap.val();
+  document.getElementById("vib").innerText = d.vibration;
+  document.getElementById("sound").innerText = d.sound;
+  document.getElementById("temp").innerText = d.temperature;
+});
 
-    // ===== ปุ่ม STOP =====
-    function stopAlarm() {
-      db.ref("/stop").set(true);
-      alert("ส่งคำสั่งหยุดเรียบร้อย");
-    }
-  </script>
-
+function stopAlarm(){
+  db.ref("control/stop").set(true);
+}
+</script>
 </body>
 </html>
