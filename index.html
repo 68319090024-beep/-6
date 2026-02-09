@@ -2,65 +2,59 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Firebase EarthQuake Monitor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earthquake Remote Control</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    
+
     <style>
-        body { font-family: sans-serif; text-align: center; background: #2c3e50; color: white; }
-        .card { background: #34495e; padding: 20px; border-radius: 15px; width: 300px; margin: 20px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .val { font-size: 2em; color: #2ecc71; }
-        .alert { color: #e74c3c; animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0; } }
-        button { padding: 10px 20px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; }
+        body { font-family: sans-serif; text-align: center; background: #1a1a1a; color: white; padding: 20px; }
+        .card { background: #333; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 400px; margin: auto; }
+        .btn-reset { padding: 20px 40px; font-size: 20px; background: #ff8800; color: white; border: none; border-radius: 12px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.3s; }
+        .btn-reset:hover { background: #e67e22; }
+        .status { font-size: 24px; margin-bottom: 20px; }
+        .alert { color: #ff4444; }
+        .normal { color: #00ff88; }
     </style>
 </head>
 <body>
-
-    <h1>🌍 Earthquake Real-time Monitor</h1>
-    
     <div class="card">
-        <h3>สถานะระบบ</h3>
-        <div id="status-text" class="val">ปกติ</div>
+        <h1>📟 ระบบควบคุมทางไกล</h1>
+        <div class="status">สถานะ: <span id="st">รอข้อมูล...</span></div>
+        <div style="margin-bottom: 20px;">อุณหภูมิ: <span id="tm">--</span> °C</div>
+        <button class="btn-reset" onclick="sendReset()">🔄 สั่งหยุดเสียง & รีเซ็ต</button>
     </div>
-
-    <div class="card">
-        <p>🌡 อุณหภูมิ: <span id="temp" class="val">--</span> °C</p>
-        <p>📳 สั่นสะเทือน: <span id="vib" class="val">--</span></p>
-        <p>🔊 เสียง: <span id="sound" class="val">--</span></p>
-    </div>
-
-    <button onclick="resetSystem()" style="background:#e67e22; color:white;">RESET ALERT</button>
 
     <script>
         // --- คัดลอก Config จาก Firebase Console มาใส่ที่นี่ ---
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            databaseURL: "https://kun16-95305-default-rtdb.firebaseio.com/",
-            projectId: "JzYsdDN0mMtzTIzbxcPKzc98pbmf0yK2bg57HxoF",
+            apiKey: "AIzaSy...", 
+            databaseURL: "https://kun16-95305-default-rtdb.firebaseio.com",
+            projectId: "kun16-95305",
         };
-        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ดึงข้อมูล Real-time
+        // ดึงข้อมูล Real-time จาก Firebase
         db.ref("Monitor").on("value", (snapshot) => {
             const data = snapshot.val();
-            document.getElementById("temp").innerText = data.temperature;
-            document.getElementById("vib").innerText = data.vibration == 1 ? "ปกติ" : "⚠️ ตรวจพบ";
-            document.getElementById("sound").innerText = data.sound == 1 ? "ปกติ" : "⚠️ ตรวจพบ";
+            const statusEl = document.getElementById("st");
+            const tempEl = document.getElementById("tm");
             
-            if (data.alertLocked) {
-                document.getElementById("status-text").innerText = "🚨 ตรวจพบแผ่นดินไหว!";
-                document.getElementById("status-text").classList.add("alert");
+            tempEl.innerText = data.temp || "--";
+            if (data.alert) {
+                statusEl.innerText = "🚨 ตรวจพบเหตุ!";
+                statusEl.className = "status alert";
             } else {
-                document.getElementById("status-text").innerText = "ปกติ";
-                document.getElementById("status-text").classList.remove("alert");
+                statusEl.innerText = "✅ ปกติ";
+                statusEl.className = "status normal";
             }
         });
 
-        function resetSystem() {
-            db.ref("Monitor").update({ alertLocked: false });
+        // ฟังก์ชันสั่งรีเซ็ต (เขียนค่ากลับไปที่ Firebase)
+        function sendReset() {
+            db.ref("Monitor/alert").set(false);
+            alert("ส่งคำสั่งรีเซ็ตไปยัง Firebase แล้ว!");
         }
     </script>
 </body>
