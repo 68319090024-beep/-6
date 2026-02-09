@@ -1,39 +1,184 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-  <meta charset="utf-8">
-  <title>Earthquake Monitoring</title>
+<meta charset="UTF-8">
+<title>Earthquake Monitoring System</title>
+
+<!-- ===== STYLE ===== -->
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    margin: 0;
+    padding: 0;
+    color: #fff;
+  }
+
+  .container {
+    max-width: 520px;
+    margin: 40px auto;
+    padding: 25px;
+    background: rgba(0,0,0,0.45);
+    border-radius: 18px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+    text-align: center;
+  }
+
+  h1 {
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-bottom: 20px;
+  }
+
+  .status {
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+
+  .safe {
+    background: #2ecc71;
+  }
+
+  .alert {
+    background: #e74c3c;
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0% {opacity: 1;}
+    50% {opacity: 0.5;}
+    100% {opacity: 1;}
+  }
+
+  .cards {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+  }
+
+  .card {
+    flex: 1;
+    background: rgba(255,255,255,0.12);
+    padding: 15px;
+    border-radius: 12px;
+  }
+
+  .card h3 {
+    margin: 0;
+    font-size: 16px;
+    opacity: 0.9;
+  }
+
+  .card p {
+    font-size: 26px;
+    margin: 12px 0 0;
+    font-weight: bold;
+  }
+
+  .stop-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+    background: #c0392b;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .stop-btn:hover {
+    background: #e74c3c;
+  }
+
+  .footer {
+    margin-top: 20px;
+    font-size: 12px;
+    opacity: 0.6;
+  }
+</style>
 </head>
+
 <body>
-  <h2>📡 Earthquake Monitoring</h2>
 
-  <p>Vibration: <span id="vib">-</span></p>
-  <p>Sound: <span id="sound">-</span></p>
-  <p>Temp: <span id="temp">-</span> °C</p>
+<div class="container">
+  <h1>🌍 Earthquake Monitoring</h1>
+  <div class="subtitle">ระบบตรวจจับและเฝ้าระวังแผ่นดินไหว</div>
 
-  <button onclick="stopAlarm()">🛑 STOP ALARM</button>
+  <div id="status" class="status safe">🟢 NORMAL</div>
 
+  <div class="cards">
+    <div class="card">
+      <h3>แรงสั่น</h3>
+      <p id="vib">-</p>
+    </div>
+    <div class="card">
+      <h3>เสียง</h3>
+      <p id="sound">-</p>
+    </div>
+    <div class="card">
+      <h3>อุณหภูมิ</h3>
+      <p id="temp">- °C</p>
+    </div>
+  </div>
+
+  <button class="stop-btn" onclick="stopAlarm()">🛑 STOP ALARM</button>
+
+  <div class="footer">
+    Realtime Firebase • ESP8266 • Telegram
+  </div>
+</div>
+
+<!-- ===== FIREBASE ===== -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-var firebaseConfig = {
-  databaseURL: "https://jane-904ca-default-rtdb.firebaseio.com"
-};
-firebase.initializeApp(firebaseConfig);
+  // 🔥 Firebase Config (ใช้ databaseURL อย่างเดียวพอ)
+  var firebaseConfig = {
+    databaseURL: "https://jane-904ca-default-rtdb.firebaseio.com"
+  };
+  firebase.initializeApp(firebaseConfig);
 
-var db = firebase.database();
+  var db = firebase.database();
 
-db.ref("sensor").on("value", snap => {
-  let d = snap.val();
-  document.getElementById("vib").innerText = d.vibration;
-  document.getElementById("sound").innerText = d.sound;
-  document.getElementById("temp").innerText = d.temperature;
-});
+  // 📡 อ่านค่าเซนเซอร์
+  db.ref("sensor").on("value", function(snapshot) {
+    var d = snapshot.val();
+    if (!d) return;
 
-function stopAlarm(){
-  db.ref("control/stop").set(true);
-}
+    document.getElementById("vib").innerText = d.vibration;
+    document.getElementById("sound").innerText = d.sound;
+    document.getElementById("temp").innerText = d.temperature;
+  });
+
+  // 🚨 สถานะ ALERT
+  db.ref("status/alert").on("value", function(snapshot) {
+    var alert = snapshot.val();
+    var status = document.getElementById("status");
+
+    if (alert) {
+      status.innerText = "🔴 ALERT";
+      status.className = "status alert";
+    } else {
+      status.innerText = "🟢 NORMAL";
+      status.className = "status safe";
+    }
+  });
+
+  // 🛑 ปุ่มหยุด
+  function stopAlarm() {
+    db.ref("control/stop").set(true);
+    alert("ส่งคำสั่ง STOP แล้ว");
+  }
 </script>
+
 </body>
 </html>
