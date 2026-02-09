@@ -1,183 +1,104 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<title>Earthquake Monitoring System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earthquake Monitoring Dashboard</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ecf0f1; margin: 0; padding: 20px; color: var(--primary); }
+        .container { max-width: 600px; margin: auto; }
+        .header { text-align: center; padding: 20px; background: var(--primary); color: white; border-radius: 15px 15px 0 0; }
+        
+        .dashboard { background: white; padding: 20px; border-radius: 0 0 15px 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .card { padding: 15px; border-radius: 10px; border: 1px solid #ddd; text-align: center; }
+        .card h3 { margin: 0 0 10px 0; font-size: 14px; color: #7f8c8d; }
+        .value { font-size: 24px; font-weight: bold; }
+        
+        .system-status { padding: 15px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; text-align: center; }
+        .status-ok { background: #d4edda; color: #155724; }
+        .status-alert { background: #f8d7da; color: #721c24; animation: blink 1s infinite; }
+        
+        .controls { display: flex; gap: 10px; }
+        button { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-stop { background: var(--warning); color: #000; }
+        .btn-reset { background: var(--success); }
+        button:hover { opacity: 0.8; transform: translateY(-2px); }
 
-<!-- ===== STYLE ===== -->
-<style>
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    margin: 0;
-    padding: 0;
-    color: #fff;
-  }
-
-  .container {
-    max-width: 520px;
-    margin: 40px auto;
-    padding: 25px;
-    background: rgba(0,0,0,0.45);
-    border-radius: 18px;
-    box-shadow: 0 0 25px rgba(0,0,0,0.7);
-    text-align: center;
-  }
-
-  h1 {
-    margin-top: 0;
-    margin-bottom: 10px;
-  }
-
-  .subtitle {
-    font-size: 14px;
-    opacity: 0.8;
-    margin-bottom: 20px;
-  }
-
-  .status {
-    padding: 10px;
-    border-radius: 10px;
-    font-size: 18px;
-    margin-bottom: 20px;
-  }
-
-  .safe {
-    background: #2ecc71;
-  }
-
-  .alert {
-    background: #e74c3c;
-    animation: blink 1s infinite;
-  }
-
-  @keyframes blink {
-    0% {opacity: 1;}
-    50% {opacity: 0.5;}
-    100% {opacity: 1;}
-  }
-
-  .cards {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 25px;
-  }
-
-  .card {
-    flex: 1;
-    background: rgba(255,255,255,0.12);
-    padding: 15px;
-    border-radius: 12px;
-  }
-
-  .card h3 {
-    margin: 0;
-    font-size: 16px;
-    opacity: 0.9;
-  }
-
-  .card p {
-    font-size: 26px;
-    margin: 12px 0 0;
-    font-weight: bold;
-  }
-
-  .stop-btn {
-    width: 100%;
-    padding: 16px;
-    font-size: 18px;
-    background: #c0392b;
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-
-  .stop-btn:hover {
-    background: #e74c3c;
-  }
-
-  .footer {
-    margin-top: 20px;
-    font-size: 12px;
-    opacity: 0.6;
-  }
-</style>
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
+    </style>
 </head>
-
 <body>
 
 <div class="container">
-  <h1>🌍 Earthquake Monitoring</h1>
-  <div class="subtitle">ระบบตรวจจับและเฝ้าระวังแผ่นดินไหว</div>
-
-  <div id="status" class="status safe">🟢 NORMAL</div>
-
-  <div class="cards">
-    <div class="card">
-      <h3>แรงสั่น</h3>
-      <p id="vib">-</p>
+    <div class="header">
+        <h2>📡 ระบบเฝ้าระวังแผ่นดินไหว</h2>
     </div>
-    <div class="card">
-      <h3>เสียง</h3>
-      <p id="sound">-</p>
-    </div>
-    <div class="card">
-      <h3>อุณหภูมิ</h3>
-      <p id="temp">- °C</p>
-    </div>
-  </div>
+    
+    <div class="dashboard">
+        <div id="alarm-banner" class="system-status status-ok">
+            สถานะปัจจุบัน: ปกติ
+        </div>
 
-  <button class="stop-btn" onclick="stopAlarm()">🛑 STOP ALARM</button>
+        <div class="status-grid">
+            <div class="card">
+                <h3>🌡 อุณหภูมิ</h3>
+                <div class="value"><span id="temp">--</span> °C</div>
+            </div>
+            <div class="card">
+                <h3>📳 สั่นสะเทือน</h3>
+                <div id="vib-label" class="value">--</div>
+            </div>
+            <div class="card" style="grid-column: span 2;">
+                <h3>🔊 ระดับเสียง</h3>
+                <div id="sound-label" class="value">--</div>
+            </div>
+        </div>
 
-  <div class="footer">
-    Realtime Firebase • ESP8266 • Telegram
-  </div>
+        <div class="controls">
+            <button class="btn-stop" onclick="control('stop')">🔇 หยุดเสียงเตือน</button>
+            <button class="btn-reset" onclick="control('reset')">🔄 รีเซ็ตระบบ</button>
+        </div>
+    </div>
 </div>
 
-<!-- ===== FIREBASE ===== -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
 <script>
-  // 🔥 Firebase Config (ใช้ databaseURL อย่างเดียวพอ)
-  var firebaseConfig = {
-    databaseURL: "https://jane-904ca-default-rtdb.firebaseio.com"
-  };
-  firebase.initializeApp(firebaseConfig);
-
-  var db = firebase.database();
-
-  // 📡 อ่านค่าเซนเซอร์
-  db.ref("sensor").on("value", function(snapshot) {
-    var d = snapshot.val();
-    if (!d) return;
-
-    document.getElementById("vib").innerText = d.vibration;
-    document.getElementById("sound").innerText = d.sound;
-    document.getElementById("temp").innerText = d.temperature;
-  });
-
-  // 🚨 สถานะ ALERT
-  db.ref("status/alert").on("value", function(snapshot) {
-    var alert = snapshot.val();
-    var status = document.getElementById("status");
-
-    if (alert) {
-      status.innerText = "🔴 ALERT";
-      status.className = "status alert";
-    } else {
-      status.innerText = "🟢 NORMAL";
-      status.className = "status safe";
+    // ฟังก์ชันดึงข้อมูลจาก ESP8266
+    function updateData() {
+        fetch('/data')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('temp').innerText = data.temp;
+                document.getElementById('vib-label').innerText = data.vib == 1 ? "ปกติ" : "⚠️ ตรวจพบ";
+                document.getElementById('sound-label').innerText = data.sound == 1 ? "ปกติ" : "⚠️ ตรวจพบ";
+                
+                const banner = document.getElementById('alarm-banner');
+                if(data.alert == true) {
+                    banner.innerText = "🚨 ตรวจพบเหตุการณ์ผิดปกติ!";
+                    banner.className = "system-status status-alert";
+                } else {
+                    banner.innerText = "✅ สถานะปัจจุบัน: ปกติ";
+                    banner.className = "system-status status-ok";
+                }
+            })
+            .catch(err => console.log("เชื่อมต่อบอร์ดไม่ได้..."));
     }
-  });
 
-  // 🛑 ปุ่มหยุด
-  function stopAlarm() {
-    db.ref("control/stop").set(true);
-    alert("ส่งคำสั่ง STOP แล้ว");
-  }
+    // ฟังก์ชันส่งคำสั่งควบคุม
+    function control(action) {
+        fetch('/' + action)
+            .then(() => alert("ส่งคำสั่ง " + action + " เรียบร้อย"));
+    }
+
+    // อัปเดตข้อมูลทุกๆ 2 วินาที
+    setInterval(updateData, 2000);
 </script>
 
 </body>
